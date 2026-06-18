@@ -6,8 +6,13 @@ const path = require('path');
 const app = express();
 app.use(bodyParser.json());
 
-// Fixed path routing casing logic to match GitHub Repository assets perfectly
-app.use(express.static(path.join(__dirname, 'Public')));
+// STRICT LOWERCASE: Ensures GitHub and Render read the folder correctly
+app.use(express.static(path.join(__dirname, 'public')));
+
+// EXPLICIT ROUTE: Prevents the "Cannot GET /" error on Render
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 let feedbacks = []; 
 
@@ -20,6 +25,7 @@ app.post('/api/feedback', (req, res) => {
         mealSession, 
         rating, 
         comments, 
+        // Locks timestamps strictly to Indian Standard Time (IST)
         timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) 
     };
     
@@ -40,8 +46,8 @@ app.get('/api/report/pdf', (req, res) => {
     
     doc.pipe(res);
 
-    // --- Embedded Logo Header for PDF Report ---
-    const logoPath = path.join(__dirname, 'Public', 'logo.jpeg');
+    // --- Embedded Logo Header for PDF Report (Strict Lowercase) ---
+    const logoPath = path.join(__dirname, 'public', 'logo.jpeg');
     try {
         doc.image(logoPath, (doc.page.width - 160) / 2, 25, { width: 160 });
         doc.moveDown(3);
@@ -124,5 +130,5 @@ function triggerNegativeFeedbackAlert(feedback) {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running!`);
+    console.log(`Server is running on port ${PORT}!`);
 });
