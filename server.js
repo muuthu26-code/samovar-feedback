@@ -5,7 +5,9 @@ const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Fixed path routing casing logic to match GitHub Repository assets perfectly
+app.use(express.static(path.join(__dirname, 'Public')));
 
 let feedbacks = []; 
 
@@ -18,7 +20,7 @@ app.post('/api/feedback', (req, res) => {
         mealSession, 
         rating, 
         comments, 
-        timestamp: new Date().toLocaleString() 
+        timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) 
     };
     
     feedbacks.push(newFeedback);
@@ -38,26 +40,28 @@ app.get('/api/report/pdf', (req, res) => {
     
     doc.pipe(res);
 
-    // --- Embedded Logo Header for PDF (Updated to .jpeg extension) ---
-    const logoPath = path.join(__dirname, 'public', 'logo.jpeg');
+    // --- Embedded Logo Header for PDF Report ---
+    const logoPath = path.join(__dirname, 'Public', 'logo.jpeg');
     try {
-        doc.image(logoPath, (doc.page.width - 250) / 2, 25, { width: 250 });
-        doc.moveDown(4);
+        doc.image(logoPath, (doc.page.width - 160) / 2, 25, { width: 160 });
+        doc.moveDown(3);
     } catch (err) {
-        doc.fontSize(14).text('Radisson Blu Plaza Hotel Mysore', { align: 'center' });
+        doc.fontSize(12).font('Helvetica-Bold').text('Radisson Blu Plaza Hotel Mysore', { align: 'center' });
         doc.moveDown();
     }
 
-    doc.fontSize(14).font('Helvetica-Bold').text('Samovar Feedback Report', { align: 'center' });
-    doc.fontSize(9).font('Helvetica').text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+    // PDF Title layout matching Arial equivalent typography rules
+    doc.fontSize(14).font('Helvetica-Bold').text('Samovar (Moment Makers Feedback)', { align: 'center' });
+    doc.fontSize(9).font('Helvetica').text(`Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`, { align: 'center' });
     doc.moveDown(1.5);
 
     if (feedbacks.length === 0) {
         doc.fontSize(12).text('No feedback recorded yet.', { align: 'center' });
     } else {
-        const tableTop = 160;
+        const tableTop = 150;
         const padding = 10;
         
+        // Dynamic Grid coordinates mapping
         const colTimeX = 30;     const colTimeW = 90;
         const colNameX = 125;    const colNameW = 85;
         const colDeptX = 215;    const colDeptW = 110;
@@ -76,7 +80,7 @@ app.get('/api/report/pdf', (req, res) => {
 
         doc.moveTo(30, tableTop + 15).lineTo(565, tableTop + 15).strokeColor('#333333').lineWidth(1).stroke();
 
-        // --- Draw Table Rows ---
+        // --- Draw Table Rows with Dynamic Text Wrap Engine ---
         doc.font('Helvetica').fontSize(9);
         let currentTop = tableTop + 25;
 
@@ -108,7 +112,7 @@ app.get('/api/report/pdf', (req, res) => {
 
 function triggerNegativeFeedbackAlert(feedback) {
     console.log('\n=============================================');
-    console.log('🚨 URGENT: SAMOVAR NEGATIVE FEEDBACK ALERT 🚨');
+    console.log('🚨 URGENT: MOMENT MAKERS NEGATIVE ALERT 🚨');
     console.log(`Timestamp:    ${feedback.timestamp}`);
     console.log(`Employee:     ${feedback.employeeName}`);
     console.log(`Department:   ${feedback.department}`);
@@ -120,5 +124,5 @@ function triggerNegativeFeedbackAlert(feedback) {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running! Open http://localhost:${PORT} in your browser.`);
+    console.log(`Server is running!`);
 });
