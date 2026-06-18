@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samovar Feedback</title>
+    <style>
+        /* Forces all elements strictly into Arial font family */
+        body, input, select, textarea, button, h2, h3 { 
+            font-family: Arial, Helvetica, sans-serif !important; 
+        }
+        
+        body { background-color: #f4f4f9; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        .header-container { text-align: center; margin-bottom: 25px; }
+        .header-container img { max-width: 100%; height: auto; max-height: 55px; display: block; margin: 0 auto; }
+        
+        /* Updated title styling with new text length adjustments */
+        .header-container h2 { margin: 12px 0 0 0; color: #002d62; font-size: 20px; font-weight: bold; letter-spacing: 0.5px; }
+        
+        label { font-weight: bold; margin-top: 10px; display: block; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        .admin-section { margin-top: 30px; padding-top: 20px; border-top: 2px dashed #ccc; text-align: center; }
+        .download-btn { background-color: #007bff; }
+        .download-btn:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-container">
+        <img src="logo.jpeg" alt="Radisson Blu Plaza Hotel Mysore">
+        <h2>Samovar (Moment Makers Feedback)</h2>
+    </div>
+    
+    <form id="feedbackForm">
+        <label for="employeeName">Employee Name:</label>
+        <input type="text" id="employeeName" required placeholder="e.g., Jane Doe">
+
+        <label for="department">Department:</label>
+        <select id="department" required>
+            <option value="" disabled selected>Select Department</option>
+            <option value="Food & Beverage Service">Food & Beverage Service</option>
+            <option value="Food & Beverage Production (Kitchen)">Food & Beverage Production (Kitchen)</option>
+            <option value="Housekeeping">Housekeeping</option>
+            <option value="Front Office">Front Office</option>
+            <option value="Engineering & Maintenance">Engineering & Maintenance</option>
+            <option value="Security">Security</option>
+            <option value="Finance & Accounts">Finance & Accounts</option>
+            <option value="Human Resources / Training">Human Resources / Training</option>
+            <option value="Sales & Marketing">Sales & Marketing</option>
+        </select>
+
+        <label for="mealSession">Meal Session:</label>
+        <select id="mealSession" required>
+            <option value="" disabled selected>Select Meal Session</option>
+            <option value="Breakfast">Breakfast</option>
+            <option value="Morning Tea">Morning Tea</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Evening Tea">Evening Tea</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Midnight Supper">Midnight Supper</option>
+        </select>
+
+        <label for="rating">Rating (1 to 5):</label>
+        <select id="rating" required>
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3">3 - Average</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Terrible</option>
+        </select>
+
+        <label for="comments">Comments:</label>
+        <textarea id="comments" rows="4" placeholder="Briefly explain your experience..."></textarea>
+
+        <button type="submit">Submit Feedback</button>
+    </form>
+
+    <div class="admin-section">
+        <h3>Admin Tools</h3>
+        <button class="download-btn" onclick="downloadReport()">📥 Download PDF Report</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const feedbackData = {
+            employeeName: document.getElementById('employeeName').value,
+            department: document.getElementById('department').value,
+            mealSession: document.getElementById('mealSession').value,
+            rating: parseInt(document.getElementById('rating').value),
+            comments: document.getElementById('comments').value
+        };
+
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedbackData)
+        });
+
+        if (response.ok) {
+            alert('Feedback submitted successfully!');
+            document.getElementById('feedbackForm').reset();
+        }
+    });
+
+    function downloadReport() {
+        window.location.href = '/api/report/pdf';
+    }
+</script>
+
+</body>
+</html>
