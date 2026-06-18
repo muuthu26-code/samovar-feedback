@@ -6,10 +6,8 @@ const path = require('path');
 const app = express();
 app.use(bodyParser.json());
 
-// STRICT LOWERCASE: Ensures GitHub and Render read the folder correctly
 app.use(express.static(path.join(__dirname, 'public')));
 
-// EXPLICIT ROUTE: Prevents the "Cannot GET /" error on Render
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -19,14 +17,20 @@ let feedbacks = [];
 app.post('/api/feedback', (req, res) => {
     const { employeeName, department, mealSession, rating, comments } = req.body;
     
+    // Create specific date formats for accurate IST tracking and filtering
+    const dateObj = new Date();
+    const istDateStr = dateObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // Format: YYYY-MM-DD
+    const istMonthStr = istDateStr.substring(0, 7); // Format: YYYY-MM
+    
     const newFeedback = { 
         employeeName, 
         department, 
         mealSession, 
         rating, 
         comments, 
-        // Locks timestamps strictly to Indian Standard Time (IST)
-        timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) 
+        timestamp: dateObj.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        dateKey: istDateStr,
+        monthKey: istMonthStr
     };
     
     feedbacks.push(newFeedback);
@@ -38,36 +42,50 @@ app.post('/api/feedback', (req, res) => {
     res.status(200).json({ message: 'Feedback successfully recorded!' });
 });
 
+// Updated PDF Generation Route with Filtering
 app.get('/api/report/pdf', (req, res) => {
+    const { date, month } = req.query;
+    
+    let filteredFeedbacks = feedbacks;
+    let reportTitle = 'Samovar (All-Time Feedback)';
+
+    // Filter logic based on Admin selection
+    if (date) {
+        filteredFeedbacks = feedbacks.filter(fb => fb.dateKey === date);
+        reportTitle = `Samovar Daily Report: ${date}`;
+    } else if (month) {
+        filteredFeedbacks = feedbacks.filter(fb => fb.monthKey === month);
+        reportTitle = `Samovar Monthly Report: ${month}`;
+    }
+
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
     
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=Samovar_Feedback_Report.pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Samovar_Report_${date || month || 'All'}.pdf`);
     
     doc.pipe(res);
 
-    // --- Embedded Logo Header for PDF Report (Strict Lowercase) ---
     const logoPath = path.join(__dirname, 'public', 'logo.jpeg');
     try {
         doc.image(logoPath, (doc.page.width - 160) / 2, 25, { width: 160 });
-        doc.moveDown(3);
+        doc.y = 115; 
     } catch (err) {
+        doc.y = 50;
         doc.fontSize(12).font('Helvetica-Bold').text('Radisson Blu Plaza Hotel Mysore', { align: 'center' });
-        doc.moveDown();
+        doc.moveDown(2);
     }
 
-    // PDF Title layout matching Arial equivalent typography rules
-    doc.fontSize(14).font('Helvetica-Bold').text('Samovar (Moment Makers Feedback)', { align: 'center' });
+    doc.fontSize(14).font('Helvetica-Bold').text(reportTitle, { align: 'center' });
     doc.fontSize(9).font('Helvetica').text(`Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`, { align: 'center' });
     doc.moveDown(1.5);
 
-    if (feedbacks.length === 0) {
-        doc.fontSize(12).text('No feedback recorded yet.', { align: 'center' });
+    if (filteredFeedbacks.length === 0) {
+        doc.moveDown(2);
+        doc.fontSize(12).text('No feedback recorded for this selected period.', { align: 'center' });
     } else {
-        const tableTop = 150;
+        const tableTop = 180;
         const padding = 10;
         
-        // Dynamic Grid coordinates mapping
         const colTimeX = 30;     const colTimeW = 90;
         const colNameX = 125;    const colNameW = 85;
         const colDeptX = 215;    const colDeptW = 110;
@@ -75,7 +93,6 @@ app.get('/api/report/pdf', (req, res) => {
         const colRatingX = 410;  const colRatingW = 40;
         const colCommentsX = 455;const colCommentsW = 110;
 
-        // --- Draw Table Header ---
         doc.fontSize(10).font('Helvetica-Bold');
         doc.text('Date & Time', colTimeX, tableTop);
         doc.text('Employee', colNameX, tableTop);
@@ -86,11 +103,10 @@ app.get('/api/report/pdf', (req, res) => {
 
         doc.moveTo(30, tableTop + 15).lineTo(565, tableTop + 15).strokeColor('#333333').lineWidth(1).stroke();
 
-        // --- Draw Table Rows with Dynamic Text Wrap Engine ---
         doc.font('Helvetica').fontSize(9);
         let currentTop = tableTop + 25;
 
-        feedbacks.forEach((fb) => {
+        filteredFeedbacks.forEach((fb) => {
             const commentHeight = doc.heightOfString(fb.comments || '-', { width: colCommentsW });
             const rowHeight = Math.max(commentHeight, 25) + padding;
 
@@ -119,16 +135,12 @@ app.get('/api/report/pdf', (req, res) => {
 function triggerNegativeFeedbackAlert(feedback) {
     console.log('\n=============================================');
     console.log('🚨 URGENT: MOMENT MAKERS NEGATIVE ALERT 🚨');
-    console.log(`Timestamp:    ${feedback.timestamp}`);
     console.log(`Employee:     ${feedback.employeeName}`);
-    console.log(`Department:   ${feedback.department}`);
-    console.log(`Meal Session: ${feedback.mealSession}`);
-    console.log(`Rating:       ${feedback.rating}/5`);
     console.log(`Comments:     "${feedback.comments}"`);
     console.log('=============================================\n');
 }
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}!`);
+    console.log(`Server is running!`);
 });

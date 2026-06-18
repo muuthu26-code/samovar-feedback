@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samovar Admin Reports</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #e9ecef; padding: 30px; }
+        .admin-container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { color: #002d62; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        .control-group { margin-top: 25px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #ddd; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #333; }
+        input[type="date"], input[type="month"] { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .btn-daily { background-color: #17a2b8; }
+        .btn-daily:hover { background-color: #138496; }
+        .btn-monthly { background-color: #007bff; }
+        .btn-monthly:hover { background-color: #0056b3; }
+        .btn-all { background-color: #6c757d; margin-top: 30px; }
+        .btn-all:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h2>📊 Reporting Dashboard</h2>
+
+    <div class="control-group">
+        <label>📥 Download Daily Report</label>
+        <input type="date" id="reportDate">
+        <button class="btn-daily" onclick="downloadDaily()">Generate Date Report</button>
+    </div>
+
+    <div class="control-group">
+        <label>📆 Download Monthly Report</label>
+        <input type="month" id="reportMonth">
+        <button class="btn-monthly" onclick="downloadMonthly()">Generate Month Report</button>
+    </div>
+
+    <button class="btn-all" onclick="downloadAll()">Download All-Time Master Report</button>
+</div>
+
+<script>
+    function downloadDaily() {
+        const dateVal = document.getElementById('reportDate').value;
+        if (!dateVal) return alert('Please select a specific date first!');
+        window.location.href = `/api/report/pdf?date=${dateVal}`;
+    }
+
+    function downloadMonthly() {
+        const monthVal = document.getElementById('reportMonth').value;
+        if (!monthVal) return alert('Please select a specific month first!');
+        window.location.href = `/api/report/pdf?month=${monthVal}`;
+    }
+
+    function downloadAll() {
+        window.location.href = '/api/report/pdf';
+    }
+</script>
+
+</body>
+</html>
