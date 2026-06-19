@@ -1,18 +1,12 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const PDFDocument = require('pdfkit');
-const path = require('path');
-const admin = require('firebase-admin'); // REQUIRED: Must be at the top
-
-const app = express();
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Initialize Firebase
+// --- DIAGNOSTIC INITIALIZATION ---
 let db;
 try {
     const keyPath = process.env.RENDER ? '/etc/secrets/firebase-key.json' : './firebase-key.json';
+    console.log("Looking for key at:", keyPath);
+    
+    // Check if file exists/loads
     const serviceAccount = require(keyPath);
+    console.log("Service account loaded:", !!serviceAccount);
 
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
@@ -22,18 +16,5 @@ try {
     console.log("🔥 Firebase Database connected successfully!");
 } catch (err) {
     console.error("❌ Firebase initialization failed:", err.message);
+    console.error("Stack trace:", err.stack);
 }
-
-// Your routes
-app.post('/submit-feedback', async (req, res) => {
-    try {
-        if (!db) throw new Error("Database not initialized");
-        // Your logic here...
-        res.status(200).send("Feedback saved");
-    } catch (error) {
-        res.status(500).send(error.message);
-    }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

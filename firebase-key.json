@@ -1,0 +1,31 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const PDFDocument = require('pdfkit');
+const path = require('path');
+const admin = require('firebase-admin');
+
+const app = express();
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- SAFE INITIALIZATION ---
+let db; 
+try {
+    const keyPath = process.env.RENDER ? '/etc/secrets/firebase-key.json' : './firebase-key.json';
+    const serviceAccount = require(keyPath);
+
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+    
+    // Now initialize db ONLY after successful initialization
+    db = admin.firestore();
+    console.log("🔥 Firebase Database connected successfully!");
+} catch (err) {
+    console.error("❌ Firebase initialization failed:", err.message);
+    // We don't exit here so your app can still show the error in the logs
+}
+// ------------------------------------------
+
+// Now, whenever you use 'db' in your routes (like in the feedback POST route), 
+// it will be ready to use!
