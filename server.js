@@ -1,5 +1,14 @@
-// --- CORRECTED & ROBUST FIREBASE INITIALIZATION ---
-let db; 
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const admin = require('firebase-admin'); // Ensure this is at the very top
+
+const app = express();
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Initialize Firebase
+let db;
 try {
     const keyPath = process.env.RENDER ? '/etc/secrets/firebase-key.json' : './firebase-key.json';
     const serviceAccount = require(keyPath);
@@ -8,12 +17,22 @@ try {
         credential: admin.credential.cert(serviceAccount)
     });
     
-    // Initialize db ONLY here, after success
     db = admin.firestore();
     console.log("🔥 Firebase Database connected successfully!");
 } catch (err) {
     console.error("❌ Firebase initialization failed:", err.message);
-    // This allows the app to stay alive so Render doesn't crash immediately,
-    // but you will see the error in your logs so you can fix the key.
 }
-// ------------------------------------------
+
+// Example usage of db
+app.post('/submit-feedback', async (req, res) => {
+    try {
+        if (!db) throw new Error("Database not initialized");
+        // Your logic here...
+        res.status(200).send("Feedback saved");
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
