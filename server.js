@@ -1,7 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const PDFDocument = require('pdfkit');
 const path = require('path');
-const admin = require('firebase-admin'); // Ensure this is at the very top
+const admin = require('firebase-admin'); // REQUIRED: Must be at the top
 
 const app = express();
 app.use(bodyParser.json());
@@ -23,7 +24,7 @@ try {
     console.error("❌ Firebase initialization failed:", err.message);
 }
 
-// Example usage of db
+// Your routes
 app.post('/submit-feedback', async (req, res) => {
     try {
         if (!db) throw new Error("Database not initialized");
