@@ -1,38 +1,21 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
 const admin = require('firebase-admin');
+const fs = require('fs');
+const path = require('path');
 
-const app = express();
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Initialize Firebase
-let db;
 try {
-    const keyPath = process.env.RENDER ? '/etc/secrets/firebase-key.json' : './firebase-key.json';
-    const serviceAccount = require(keyPath);
-
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
+  // Path to the Render secret file
+  const secretPath = path.join(__dirname, 'firebase-service-account.json');
+  
+  if (fs.existsSync(secretPath)) {
+    const serviceAccount = JSON.parse(fs.readFileSync(secretPath, 'utf8'));
     
-    db = admin.firestore();
-    console.log("🔥 Firebase Database connected successfully!");
-} catch (err) {
-    console.error("❌ Firebase initialization failed:", err.message);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("Firebase initialized successfully from Secret File!");
+  } else {
+    throw new Error("Secret file 'firebase-service-account.json' missing.");
+  }
+} catch (error) {
+  console.error("Firebase initialization failed:", error.message);
 }
-
-// Routes
-app.post('/submit-feedback', async (req, res) => {
-    try {
-        if (!db) throw new Error("Database not connected");
-        // Your logic here
-        res.status(200).send("Feedback saved");
-    } catch (error) {
-        res.status(500).send(error.message);
-    }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
